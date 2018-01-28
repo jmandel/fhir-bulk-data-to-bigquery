@@ -19,6 +19,7 @@ SERVERS = json.load(open('config/servers.json'))
 SIGNING_KEY = open('config/signing-key.private.pem').read()
 ISSUER = os.environ.get('ISSUER', 'https://bulk-data-loader.smarthealthit.org')
 
+
 def get_security_headers(server_authorization):
     if server_authorization['type'] != 'smart-backend-services':
         return {}
@@ -30,6 +31,7 @@ def get_security_headers(server_authorization):
 def run_command(cmd):
     print(cmd)
     os.system(cmd)
+
 
 def digest_and_sink(request, tracer, bucket, sink_file):
     count = 0

@@ -8,6 +8,21 @@
     }
   },
   {
+    "shortname": "vonk-open",
+    "fhir_base_url": "https://vonk.furore.com:8443",
+    "authorization": {
+      "type": "open"
+    }
+  },
+  {
+    "shortname": "test-fhir-org-local",
+    "fhir_base_url": "https://local.fhir.org:961/r3",
+    "authorization": {
+      "type": "smart-backend-services",
+      "client_id": "c.3"
+    }
+  },
+  {
     "shortname": "test-fhir-org",
     "fhir_base_url": "https://test.fhir.org/r3",
     "authorization": {
@@ -31,6 +46,9 @@
   },
   {
     "shortname": "dragon-open",
-    "fhir_base_url": "http://52.70.192.201/open-fhir/fhir"
+    "fhir_base_url": "http://52.70.192.201/open-fhir/fhir",
+    "authorization": {
+      "type": "open",
+    }
   }
 ]

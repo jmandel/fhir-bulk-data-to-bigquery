@@ -10,6 +10,7 @@ import tempfile
 import time
 import sys
 import ujson as json
+from urllib.parse import quote
 
 from datetime import datetime, timedelta
 from itertools import groupby
@@ -67,7 +68,7 @@ def process_resource_type(gcs_bucket, bigquery_dataset, resource_type, resource_
         resource_filename = '%08d-%s.ndjson' % (resource_count, resource_type)
         resource_count += 1
         resource_request = requests.get(link, stream=True, headers={
-            **{'Accept': 'application/ndjson'},
+            **{'Accept': 'application/fhir+ndjson'},
             **get_security_headers(server_authorization)
         })
         digest_and_sink(resource_request, tracer,
@@ -114,15 +115,20 @@ def get_access_token(server_authorization):
         'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
         'client_assertion': jwt
     })
-    #print("Got access token", token.json())
+    print("Sent jwt", jwt)
+    print("Got access token", token.json())
     return token.json()['access_token']
 
 
 def do_sync(fhir_server, gcs_bucket, bigquery_dataset, pool_size, server_authorization):
-    wait = requests.get(url=fhir_server + "/Patient/$everything", headers={**{
-        "Prefer": "respond-async",
-        "Accept": "application/fhir+json"
-    }, **get_security_headers(server_authorization)})
+    everything_headers = {
+            **{
+                "Prefer": "respond-async",
+                "Accept": "application/fhir+json"
+            }, **get_security_headers(server_authorization)}
+    everything_url=fhir_server + "/Patient/$everything?output-format=%s"%quote('application/fhir+ndjson')
+    print("Everything", everything_url, everything_headers)
+    wait = requests.get(url=everything_url, headers=everything_headers)
 
     print(wait.headers, wait.text)
     poll_url = wait.headers["Content-Location"]
@@ -131,11 +137,13 @@ def do_sync(fhir_server, gcs_bucket, bigquery_dataset, pool_size, server_authori
     links = []
     slept_for = 0
     while True:
-        done = requests.get(poll_url, headers={
+        poll_headers = {
             **{'Accept': 'application/json'},
             **get_security_headers(server_authorization)
-        })
-        print(done.status_code, done.text, done.headers)
+        }
+        print("Poll", poll_url, poll_headers)
+        done = requests.get(poll_url, headers=poll_headers)
+        print("Polled", done.status_code, done.text, done.headers)
         if done.status_code == 200:
             links = done.json().get('output', [])
             break
@@ -143,6 +151,7 @@ def do_sync(fhir_server, gcs_bucket, bigquery_dataset, pool_size, server_authori
         time.sleep(2)
 
     run_command("gsutil mb %s" % (gcs_bucket))
+    run_command("gsutil rm %s/*.ndjson" % (gcs_bucket))
     run_command("bq mk %s" % (bigquery_dataset))
 
     links_by_resource = groupby(

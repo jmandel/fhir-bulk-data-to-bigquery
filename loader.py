@@ -168,7 +168,7 @@ if __name__ == '__main__':
     parser.add_argument('--bigquery-dataset',
                         help='BigQuery Data Set', required=True)
     parser.add_argument('--parallelism', type=int,
-                        help='Number of resource types to process in parallel', default=4, required=True)
+                        help='Number of resource types to process in parallel', default=4, required=False)
 
     args = parser.parse_args()
 
@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
     print("Connecting to resolve metadata")
     server = [s for s in SERVERS if s['shortname'] == args.source][0]
-    server_url = server['fhir_base_uri']
+    server_url = server['fhir_base_url']
 
     print("Trying to connect", server_url + '/metadata')
     while True:

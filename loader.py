@@ -122,6 +122,7 @@ def do_sync(fhir_server, gcs_bucket, bigquery_dataset, pool_size, server_authori
         "Accept": "application/fhir+json"
     }, **get_security_headers(server_authorization)})
 
+    print(wait.headers, wait.text)
     poll_url = wait.headers["Content-Location"]
     print("Got poll url", poll_url)
 

@@ -14,5 +14,12 @@
       "type": "smart-backend-services",
       "client_id": "c.2"
     }
+  },
+  {
+    "shortname": "test-fhir-org-open",
+    "fhir_base_uri": "http://test.fhir.org/r3",
+    "authorization": {
+      "type": "open",
+    }
   }
 ]

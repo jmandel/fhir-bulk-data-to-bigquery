@@ -1,24 +1,23 @@
-import requests
 import re
-import ujson as json
-import time
 import generate_schema
+import jwt
+import os
+import requests
+import secrets
 import subprocess
 import threading
+import tempfile
+import time
 import sys
-import tempfile
-from itertools import groupby
+import ujson as json
+
 from datetime import datetime, timedelta
-import secrets
+from itertools import groupby
 from multiprocessing import Pool, TimeoutError
-import tempfile
-import os
-import jwt
 
 SERVERS = json.load(open('config/servers.json'))
 SIGNING_KEY = open('config/signing-key.private.pem').read()
 ISSUER = os.environ.get('ISSUER', 'https://bulk-data-loader.smarthealthit.org')
-
 
 def get_security_headers(server_authorization):
     if server_authorization['type'] != 'smart-backend-services':
@@ -32,7 +31,6 @@ def run_command(cmd):
     print(cmd)
     os.system(cmd)
 
-
 def digest_and_sink(request, tracer, bucket, sink_file):
     count = 0
     print("Digesting", sink_file)
@@ -42,7 +40,7 @@ def digest_and_sink(request, tracer, bucket, sink_file):
             try:
                 resource = json.loads(l)
             except:
-                print("Failed to prase line", count - 1, l)
+                print("Failed to parse line", count - 1, l)
             if 'contained' in resource:
                 resource['contained'] = [json.dumps(
                     r) for r in resource['contained']]
@@ -76,7 +74,6 @@ def process_resource_type(gcs_bucket, bigquery_dataset, resource_type, resource_
     print("Digested", resource_type)
 
     with tempfile.NamedTemporaryFile('w', delete=False) as tabledef_file:
-        print("tmp file", resource_type, tabledef_file.name)
         tabledef = {
             'schema': {
                 'fields': tracer.generate_schema([resource_type])
@@ -115,7 +112,7 @@ def get_access_token(server_authorization):
         'client_assertion_type': 'urn:ietf:params:oauth:client-assertion-type:jwt-bearer',
         'client_assertion': jwt
     })
-    print("Got access token", token.json())
+    #print("Got access token", token.json())
     return token.json()['access_token']
 
 
@@ -125,7 +122,6 @@ def do_sync(fhir_server, gcs_bucket, bigquery_dataset, pool_size, server_authori
         "Accept": "application/fhir+json"
     }, **get_security_headers(server_authorization)})
 
-    print(wait.headers)
     poll_url = wait.headers["Content-Location"]
     print("Got poll url", poll_url)
 
@@ -182,6 +178,7 @@ if __name__ == '__main__':
     print("Connecting to resolve metadata")
     server = [s for s in SERVERS if s['shortname'] == args.source][0]
     server_url = server['fhir_base_uri']
+
     print("Trying to connect", server_url + '/metadata')
     while True:
         try:
@@ -194,12 +191,16 @@ if __name__ == '__main__':
     print("Connected")
 
     print("Syncing", metadata.keys())
+    if 'issue' in metadata:
+        print("Issue", metadata['issue'])
+
     if server['authorization']['type'] == 'smart-backend-services':
         smart_extension = [e for e in metadata['rest'][0]['security']['extension'] if e['url'] ==
                            'http://fhir-registry.smarthealthit.org/StructureDefinition/oauth-uris'][0]
         token_uri = [e for e in smart_extension['extension']
                      if e['url'] == 'token'][0]['valueUri']
         server['authorization']['token_uri'] = token_uri
+
     print("Authz", server)
     do_sync(server_url, args.gcs_bucket, args.bigquery_dataset,
             args.parallelism, server['authorization'])

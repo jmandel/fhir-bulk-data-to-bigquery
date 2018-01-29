@@ -4,13 +4,13 @@ Load data from a FHIR Bulk Data API into a BigQuery DataSet
 
 # Try it
 
-## Preprequisites
+## Prerequisites
 
 * Docker
 * Docker Compose
 * gcloud, with credentials for a user account or service account configured
 
-# Setup
+## Setup
 
 ```
 git clone https://github.com/jmandel/fhir-bulk-data-to-bigquery
@@ -27,7 +27,7 @@ Run the loader, specifying a:
 * `--bigquery-dataset` specifying the dataset in which you'll create tables
 * `--gcs-bucket` specifying the bucket to which you'll write the data for storage (**Warning**: Existing `.ndjson` files will be deleted from your bucket!)
 
-For example:
+## Example
 
 ```
 docker-compose run loader \

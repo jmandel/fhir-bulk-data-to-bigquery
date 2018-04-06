@@ -126,7 +126,7 @@ def do_sync(fhir_server, gcs_bucket, bigquery_dataset, pool_size, server_authori
                 "Prefer": "respond-async",
                 "Accept": "application/fhir+json"
             }, **get_security_headers(server_authorization)}
-    everything_url=fhir_server + "/Patient/$everything?output-format=%s"%quote('application/fhir+ndjson')
+    everything_url=fhir_server + "/Patient/$export?_outputFormat=%s"%quote('application/fhir+ndjson')
     print("Everything", everything_url, everything_headers)
     wait = requests.get(url=everything_url, headers=everything_headers)
 

@@ -34,21 +34,32 @@
     "shortname": "test-fhir-org-open",
     "fhir_base_url": "http://test.fhir.org/r3",
     "authorization": {
-      "type": "open",
+      "type": "open"
     }
   },
   {
-    "shortname": "cerner-open",
+    "shortname": "cerner-cologne",
     "fhir_base_url": "https://fhir-open.stagingcerner.com/stu3/a758f80e-aa74-4118-80aa-98cc75846c76",
     "authorization": {
-      "type": "open",
+      "type": "open"
     }
   },
   {
     "shortname": "dragon-open",
     "fhir_base_url": "http://52.70.192.201/open-fhir/fhir",
     "authorization": {
-      "type": "open",
+      "type": "open"
+    }
+  },
+  {
+    "shortname": "epic-cologne",
+    "fhir_base_url": "https://connectathon.epic.com/Interconnect-Fhir-Bulk/api/FHIR/STU3",
+    "groups": ["ebUKRzWjCOkHtNr8R-zHgzc4TdaZx9-TOvXKIeP0bLnM3"],
+    "authorization": {
+      "type": "open"
+    },
+    "extra_headers": {
+       "Epic-Client-ID": "37c67e7b-b694-4fe8-8d46-7c1d27b1c206"
     }
   }
 ]

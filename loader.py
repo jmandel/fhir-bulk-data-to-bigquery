@@ -53,6 +53,7 @@ def digest_and_sink(request, tracer, bucket, sink_file):
                 import sys
                 sys.stdout.flush()
             one_file.write(json.dumps(resource) + "\n")
+        one_file.flush()
         run_command("gsutil -m cp %s %s/%s" %
                     (one_file.name, bucket, sink_file))
         print("Done file", sink_file)
@@ -120,13 +121,24 @@ def get_access_token(server_authorization):
     return token.json()['access_token']
 
 
-def do_sync(fhir_server, gcs_bucket, bigquery_dataset, pool_size, server_authorization):
+def do_sync(server, gcs_bucket, bigquery_dataset, pool_size):
+    server_authorization = server['authorization']
+    fhir_server = server['fhir_base_url']
     everything_headers = {
             **{
                 "Prefer": "respond-async",
                 "Accept": "application/fhir+json"
-            }, **get_security_headers(server_authorization)}
-    everything_url=fhir_server + "/Patient/$export?_outputFormat=%s"%quote('application/fhir+ndjson')
+            },
+            **get_security_headers(server_authorization),
+            **server.get('extra_headers', {})}
+
+    target_path = 'Patient'
+    if 'groups' in server:
+        target_path = 'Group/%s'%server['groups'][0]
+
+    everything_url=fhir_server + "/%s/$export?_outputFormat=%s"%(target_path,
+            quote('application/fhir+ndjson'))
+
     print("Everything", everything_url, everything_headers)
     wait = requests.get(url=everything_url, headers=everything_headers)
 
@@ -139,7 +151,8 @@ def do_sync(fhir_server, gcs_bucket, bigquery_dataset, pool_size, server_authori
     while True:
         poll_headers = {
             **{'Accept': 'application/json'},
-            **get_security_headers(server_authorization)
+            **get_security_headers(server_authorization),
+            **server.get('extra_headers', {})
         }
         print("Poll", poll_url, poll_headers)
         done = requests.get(poll_url, headers=poll_headers)
@@ -214,5 +227,5 @@ if __name__ == '__main__':
         server['authorization']['token_uri'] = token_uri
 
     print("Authz", server)
-    do_sync(server_url, args.gcs_bucket, args.bigquery_dataset,
-            args.parallelism, server['authorization'])
+    do_sync(server, args.gcs_bucket, args.bigquery_dataset,
+            args.parallelism)
